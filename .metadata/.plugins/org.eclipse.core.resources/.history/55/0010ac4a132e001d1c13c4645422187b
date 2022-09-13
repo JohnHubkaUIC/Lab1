@@ -1,0 +1,138 @@
+/*
+ * lab1_main.c, starter code
+ *
+ * ECE 266 Lab 1 starter code, Fall 2022
+ *
+ * Created by Zhao Zhang
+ */
+
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include "launchpad.h"
+
+/*
+ * Data types
+ */
+
+// Data type for On/Off state
+typedef enum {Off, On} OnOff;
+
+// Data type for the color state of the sub-LEDs of the on-board LED
+// Note: the on-board LED consists of red, blue, and green sub-LEDs
+typedef struct {
+    bool red;               // Red sub-LED on or off
+    bool blue;              // Blue sub-LED on or off
+    bool green;             // Green sub-LED on or off
+} LedColor;
+
+/*
+ * Global variables
+ *
+ * Note: A wise use of global variables is allowed and necessary in embedded systems.
+ */
+
+// The On/Off state of the on-board LED
+OnOff led_state = Off;
+
+// Array of pre-defined sub-LED colors
+#define LED_COLOR_NUM       3
+LedColor led_colors1[LED_COLOR_NUM] = {
+  {true, false, false},   // Red on, Blue off, Green off
+  {false, true, false},   // Red off, Blue on, Green off
+  {false, false, true},    // Red off, Blue off, Green on
+};
+
+
+// Current color choice for the LED. It's a index to led_colors[]
+int color_choice = 0;
+int color_choice2 = 1;
+
+/*
+ * Task 1: Flash the LED using the current color setting
+ */
+void FlashLED(uint32_t time)				// the scheduled time for this event
+{
+    LedColor color = led_colors[color_choice];     // current color setting
+
+    switch (led_state)
+    {
+    case Off:
+        // Turn on LED by setting the sub-LED colors, change the LED state to On
+        // See ledTurnOfOff() in launchpad.h
+        LedTurnOnOff(color.red, color.blue, color.green);
+        led_state = On;
+        break;
+
+    case On:
+        // Turn off all sub-LEDs, change the LED state to Off
+        // See ledTurnOnOff() in launchpad.h
+        LedTurnOnOff(false, false, false);
+        led_state = Off;
+        break;
+    }
+
+    // Schedule the next callback event with a delay of 1000 ms from the current time
+    // See schdCallback() in launchpad.h
+    ScheduleCallback(FlashLED, time + 1000);
+}
+
+/*
+ * Task 2: Check push button
+ */
+void
+CheckPushButton(uint32_t time)
+{
+    int pb_input;                       // push button input code
+    uint32_t delay = 10;                // delay to the next callback
+
+    // Read the pushbutton state; see pbRead() in launchpad.h
+    pb_input = PbRead();
+
+    switch (pb_input) {
+    case 1:
+        // Switch to next color setting, with wrap-around
+        color_choice = (color_choice + 1) % LED_COLOR_NUM;
+
+        // Use an inertia for soft de-bouncing
+        delay = 250;
+        break;
+
+    case 2:
+        // Pring out a message
+        // See uprintf() in launchpad.h
+        uprintf("%s\n\r", "SW2 is pushed");
+        color_choice2 = (color_choice2 + 2) % LED_COLOR_NUM;
+
+        // Use an inertia for soft de-bouncing
+        delay = 250;
+        break;
+    }
+
+    ScheduleCallback(CheckPushButton, time + delay);
+}
+
+/*
+ * The main function: Print out a message, schedule the first callback events, and then
+ * run the callback scheduler.
+ */
+int main(void)
+{
+    LpInit();
+
+    // Pring out a message
+    // See uprintf() in launchpad.h
+    uprintf("%s\n\r", "Welcome to ECE266!");
+
+    // Schedule the first callback events for LED flashing and push button checking.
+    // Each of them triggers a callback chains.
+    // See schdCallback() in launchpad.h
+    ScheduleCallback(FlashLED, 1000);
+    ScheduleCallback(CheckPushButton, 1005);
+
+    // Run the callback scheduler
+    // See schdExecute() in launchpad.h
+    while (true) {
+        ScheduleExecute();
+    }
+}

@@ -1,0 +1,6 @@
+# FIXED
+
+__MACOSX/Util/._pushbutton.obj: ../__MACOSX/Util/._pushbutton.c
+
+../__MACOSX/Util/._pushbutton.c:
+

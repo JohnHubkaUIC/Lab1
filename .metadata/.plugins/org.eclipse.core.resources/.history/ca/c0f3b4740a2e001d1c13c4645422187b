@@ -1,0 +1,6 @@
+# FIXED
+
+__MACOSX/Util/._launchpad.obj: ../__MACOSX/Util/._launchpad.c
+
+../__MACOSX/Util/._launchpad.c:
+

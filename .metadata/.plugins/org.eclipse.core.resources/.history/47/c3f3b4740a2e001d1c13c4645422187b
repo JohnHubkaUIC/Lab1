@@ -1,0 +1,6 @@
+# FIXED
+
+__MACOSX/Util/._uart.obj: ../__MACOSX/Util/._uart.c
+
+../__MACOSX/Util/._uart.c:
+
